@@ -8,7 +8,7 @@ const jsonParser = express.json()
 // pull each piece of logic out of each route, all after .get, and put that all into a route file with a function for each route.
 workoutRouter
 
-  .route( '/App' )
+  .route( '/' )
 
   .get( ( req, res, next ) => {
     const knexInstance = req.app.get( 'db' )
@@ -53,7 +53,7 @@ workoutRouter
 
 workoutRouter
 
-  .route( 'App/:workoutId' )
+  .route( '/:workoutId' )
   .all( ( req, res, next ) => {
     WorkoutService.getWorkoutById(
       req.app.get( 'db' ),
