@@ -1,55 +1,55 @@
 const express = require( 'express' )
 const path = require( 'path' )
-const FolderService = require( './folder-service' )
+const TypeService = require( './type-service' )
 const logger = require( '../logger' )
 
-const folderRouter = express.Router()
+const typeRouter = express.Router()
 const jsonParser = express.json()
 
 // pull each piece of logic out of each route, all after .get, and put that all into a route file with a function for each route.
-folderRouter
-  .route( '/' )
+typeRouter
+  .route( '/App' )
   .get( ( req, res, next ) => {
     console.log("test", req.originalUrl)
     const knexInstance = req.app.get( 'db' )
-    FolderService.getAllFolders( knexInstance )
-      .then( ( folders ) => {
-        res.json( folders )
+    TypeService.getAllTypes( knexInstance )
+      .then( ( types ) => {
+        res.json( types )
       } )
       .catch( next )
   } )
   .post( jsonParser, ( req, res, next ) => {
-    const { name : newFolderName } = req.body
+    const { name : newTypeName } = req.body
     // build a validator / sanitizer middlewear for this.
-    FolderService.insertFolder(
+    TypeService.insertType(
       req.app.get( 'db' ),
-      newFolderName
+      newTypeName
     )
       .then( ( folder ) => {
         res
           .status( 201 )
-          .location( path.posix.join( req.originalUrl, `/${folder.id}` ) )
-          .json( folder )
+          .location( path.posix.join( req.originalUrl, `/${type.id}` ) )
+          .json( type )
       } )
       .catch( next )
   } )
 
-folderRouter
+typeRouter
 
-  .route( '/:folderId' )
+  .route( '/App/:typeId' )
   .all( ( req, res, next ) => {
-    FolderService.getFolderById(
+    TypeService.getTypeById(
       req.app.get( 'db' ),
       req.params.folderId
     )
-      .then( ( folder ) => {
-        if ( !folder ) {
-          logger.error( `Folder with id ${req.params.folderId} not found` )
+      .then( ( type ) => {
+        if ( !type ) {
+          logger.error( `Type with id ${req.params.typeId} not found` )
           return res.status( 404 ).json( {
-            error : { message : 'Folder not found.' }
+            error : { message : 'Type not found.' }
           } )
         }
-        res.folder = folder // save folder for next middlewear, and pass on to next
+        res.type = type // save folder for next middlewear, and pass on to next
         next()
       } )
       .catch( next )
@@ -57,41 +57,41 @@ folderRouter
   .get( ( req, res, next ) => {
     // res.json( res.folder )
 
-    FolderService.getNotesForFolder(
+    TypeService.getWorkoutsForType(
       req.app.get( 'db' ), 
-      res.folder.id
+      res.type.id
     )
-      .then( ( notes ) => {
-        if ( !notes ) {
+      .then( ( workouts ) => {
+        if ( !workouts ) {
           return res.status( 404 ).json( {
-            error : { message : 'Cannot find any notes for that folder' }
+            error : { message : 'Cannot find any workouts for that type' }
           } )
         }
-        const folder = res.folder
-        res.json( { folder, notes } )
+        const type = res.type
+        res.json( { type, workouts } )
         next()
       } )
   } )
   .patch( jsonParser, ( req, res, next ) => {
-    const { name : newFolderName } = req.body
+    const { name : newTypeName } = req.body
    
-    FolderService.updateFolderName(
+    TypeService.updateTypeName(
       req.app.get( 'db' ),
-      req.params.folderId,
-      newFolderName
+      req.params.typeId,
+      newTypeName
     )
-      .then( ( updatedFolder ) => {
+      .then( ( updatedType ) => {
         res
           .status( 200 )
-          .json( updatedFolder )
+          .json( updatedType )
 
       } )
       .catch( next )
   } )  
   .delete( ( req, res, next ) => {
-    FolderService.deleteFolder(
+    TypeService.deleteType(
       req.app.get( 'db' ),
-      req.params.folderId
+      req.params.typeId
     )
       .then( ( numRowsAffected ) => {
         res
@@ -101,4 +101,4 @@ folderRouter
       .catch( next )
   } ) 
 
-module.exports = folderRouter
+module.exports = typeRouter

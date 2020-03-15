@@ -1,39 +1,39 @@
-const FolderService = {
-    getAllFolders( knex ) {
+const TypeService = {
+    getAllTypes( knex ) {
       return knex
         .select( '*' )
-        .from( 'folders' )
+        .from( 'types' )
     },
-    insertFolder( knex, newFolderName ) {
+    insertType( knex, newTypeName ) {
       return knex
-        .insert( { name : newFolderName } )
-        .into( 'folders' )
+        .insert( { name : newTypeName } )
+        .into( 'types' )
         .returning( '*' )
         .then( ( rows ) => {
           return rows[0]
         } )
     },
-    getFolderById( knex, id ) {
+    getTypesById( knex, id ) {
       return knex
         .select( '*' )
-        .from( 'folders' )
+        .from( 'types' )
         .where( { id } )
         .first()
     },
-    getNotesForFolder( knex, folderid ) {
+    getWorkoutsForTypes( knex, typeid ) {
       const notes = knex
         .select( '*' )
-        .from( 'notes' )
-        .where( { folderid } )
+        .from( 'workouts' )
+        .where( { typeid } )
       return notes
     },
-    deleteFolder( knex, id ) {
-      return knex( 'folders' )
+    deleteType( knex, id ) {
+      return knex( 'types' )
         .where( { id } )
         .delete()
     },
-    updateFolderName( knex, id, name ) {
-      return knex( 'folders' )
+    updateTypeName( knex, id, name ) {
+      return knex( 'types' )
         .where( { id } )
         .update( { name } )
         .returning( '*' )
@@ -43,4 +43,4 @@ const FolderService = {
     },
   }
     
-  module.exports = FolderService
+  module.exports = TypeService

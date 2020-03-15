@@ -1,80 +1,82 @@
 const express = require( 'express' )
 const path = require( 'path' )
-const NoteService = require( './note-service' )
+const WorkoutService = require( './workout-service' )
 
-const noteRouter = express.Router()
+const workoutRouter = express.Router()
 const jsonParser = express.json()
 
 // pull each piece of logic out of each route, all after .get, and put that all into a route file with a function for each route.
-noteRouter
+workoutRouter
 
-  .route( '/' )
+  .route( '/App' )
 
   .get( ( req, res, next ) => {
     const knexInstance = req.app.get( 'db' )
-    NoteService.getAllNotes( knexInstance )
-      .then( ( notes ) => {
+    WorkoutService.getAllWorkouts( knexInstance )
+      .then( ( workouts ) => {
         res
           .status( 200 )
-          .json( notes )
+          .json( workouts )
       } )
       .catch( next )
   } )
 
   .post( jsonParser, ( req, res, next ) => {
-    const { name, folderid, content } = req.body
-    if ( !( name && folderid ) ) {
+    const { name, typeid, description, calories, minutes } = req.body
+    if ( !( name && typeid ) ) {
       return res.status( 400 ).json( {
-        error : { message : `${name}, ${folderid}` }
+        error : { message : `${name}, ${typeid}` }
       } )
     }
 
-    const newNote = {
+    const newWorkout = {
       name, 
-      folderid,
-      content
+      typeid,
+      description,
+      calories,
+      minutes
     }
     
-    NoteService.insertNote(
+    WorkoutService.insertWorkout(
       req.app.get( 'db' ),
-      newNote
+      newWorkout
     )
-      .then( ( note ) => {
+      .then( ( workout ) => {
         res
           .status( 201 )
-          .location( path.posix.join( req.originalUrl, `/${note.id}` ) )
-          .json( note )
+          .location( path.posix.join( req.originalUrl, `/${workout.id}` ) )
+          .json( workout )
       } )
       .catch( next )
   } )
 
 
-noteRouter
+workoutRouter
 
-  .route( '/:noteId' )
+  .route( 'App/:workoutId' )
   .all( ( req, res, next ) => {
-    NoteService.getNoteById(
+    WorkoutService.getWorkoutById(
       req.app.get( 'db' ),
-      req.params.noteId
+      req.params.workoutId
     )
-      .then( ( note ) => {
-        if ( !note ) {
+      .then( ( workout ) => {
+        if ( !workout ) {
           return res.status( 404 ).json( {
             error : { message : 'Note not found.' }
           } )
         }
-        res.note = note // save note for next middlewear, and pass on to next
+        res.workout = workout // save note for next middlewear, and pass on to next
         next()
       } )
       .catch( next )
   } )
   .get( ( req, res, next ) => {
-    res.json( res.note )
+    res.json( res.workout )
   } )
   .patch( jsonParser, ( req, res, next ) => {
-    const { name, folderId, content } = req.body
-    const noteToUpdate = { name, folderId, content }
-    const numberOfUpdatedFields = Object.values( noteToUpdate ).filter( Boolean ).length
+    const { name, typeId, description, calories, minutes } = req.body
+    const workoutToUpdate = { name, typeId, description, calories, minutes }
+    const numberOfUpdatedFields = Object.values( workoutToUpdate ).filter( Boolean ).length
     if ( numberOfUpdatedFields === 0 ) {
       return res.status( 400 ).json( {
         error : {
@@ -83,27 +85,27 @@ noteRouter
       } )
     }
     const modified = new Date()
-    const newNoteFields = {
-      ...noteToUpdate, 
+    const newWorkoutFields = {
+      ...workoutToUpdate, 
       modified
     }
     // ISSUE: You can't reassociate a note to a new folder, probably because of the constraints of the field.
-    NoteService.updateNote(
+    WorkoutService.updateNote(
       req.app.get( 'db' ),
-      res.note.id,
-      newNoteFields
+      res.workout.id,
+      newWorkoutFields
     )
-      .then( ( updatedNote ) => {
+      .then( ( updatedWorkout ) => {
         res
           .status( 200 )
-          .json( updatedNote[0] )
+          .json( updatedWorkout[0] )
       } )
       .catch( next )
   } )
   .delete( ( req, res, next ) => {
-    NoteService.deleteNote(
+    WorkoutService.deleteWorkout(
       req.app.get( 'db' ),
-      req.params.noteId
+      req.params.workoutId
     )
       .then( ( numRowsAffected ) => {
         res
@@ -113,4 +115,4 @@ noteRouter
       .catch( next )
   } )
     
-module.exports = noteRouter
+module.exports = workoutRouter
